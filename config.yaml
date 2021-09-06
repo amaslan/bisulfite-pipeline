@@ -1,0 +1,8 @@
+# genome from:
+GENOME_DIR: '/global/scratch/users/amaslan/ivana_bs/genome'
+
+# fastq.gz files
+DATA_DIR: '/global/scratch/users/amaslan/ivana'
+
+# bismark output files
+OUT_DIR: '/global/scratch/users/amaslan/ivana_bs/results'
