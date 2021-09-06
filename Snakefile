@@ -24,6 +24,11 @@ snakemake --forceall --dag | dot -Tpng > dag.png
 # use --multicore for parallelization
 # bowtie if <50, bowtie2 if >50 read length
 
+
+
+from os.path import join, basename, dirname
+import re
+
 configfile: 'config.yaml'
 
 GENOME_DIR = config['GENOME_DIR']
