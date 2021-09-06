@@ -80,7 +80,7 @@ SAMPLES_FULL = R1_R2_sample_names(SAMPLES_FULL_PATH)
 rule all:
 	input:
 		# fastqc
-		[OUT_DIR + "/" + x for x in expand('fastQC_output/{sample_full}_fastqc.html', sample_full = SAMPLES_FULL)]
+		[OUT_DIR + "/" + x for x in expand('fastQC_output/{sample_full}_fastqc.html', sample_full = SAMPLES_FULL)],
 		# multiqc
 		OUT_DIR + '/quality_control_metrics/multiqc/multiqc_report.html'
 
