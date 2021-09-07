@@ -147,7 +147,7 @@ rule bismark:
 		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 		GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
 	output:
-		{OUT_DIR}/{sample}_bismark_bt2_pe.bam
+		'{OUT_DIR}/{sample}_bismark_bt2_pe.bam'
 	threads: 4
 	shell:
 		"""
@@ -159,7 +159,7 @@ rule bismark_deduplicate:
 	input:
 		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.bam'), sample= SAMPLES)
 	output:
-		{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bam
+		'{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
 		{BISMARK}/deduplicate_bismark  --bam --paired {input}
@@ -174,7 +174,7 @@ rule bismark_methylation_extractor:
 	input:
 		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
 	output:
-		OUT_DIR/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz
+		'OUT_DIR/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz'
 	threads: 4
 	shell:
 		"""
