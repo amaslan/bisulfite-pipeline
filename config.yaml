@@ -9,3 +9,6 @@ OUT_DIR: '/global/scratch/users/amaslan/ivana_bs/results'
 
 # bismark install
 BISMARK: '/global/scratch/users/amaslan/ivana_bs/Bismark-0.22.3'
+
+# path to trimmomatic installation
+TRIM: '/clusterfs/vector/home/groups/software/sl-7.x86_64/modules/trimmomatic/0.36'

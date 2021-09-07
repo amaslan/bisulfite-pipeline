@@ -35,6 +35,7 @@ GENOME_DIR = config['GENOME_DIR']
 DATA_DIR = config['DATA_DIR']
 OUT_DIR = config['OUT_DIR']
 BISMARK = config['BISMARK']
+TRIM = config['TRIM']
 
 
 
@@ -88,6 +89,16 @@ rule all:
 		# fastqc
 		[OUT_DIR + "/" + x for x in expand('fastQC_output/{sample_full}_fastqc.html', sample_full = SAMPLES_FULL)],
 
+		# trimmomatic output
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P.fastq.gz', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1U.fastq.gz', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_2P.fastq.gz', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_2U.fastq.gz', sample = SAMPLES)],
+
+		# 2nd round of fastqc
+		[OUT_DIR + "/" + x for x in expand('fastQC_output_2/{sample}_filtered_1P_fastqc.html', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('fastQC_output_2/{sample}_filtered_2P_fastqc.html', sample = SAMPLES)],
+
 		# multiqc
 		OUT_DIR + '/quality_control_metrics/multiqc/multiqc_report.html',
 
@@ -95,13 +106,13 @@ rule all:
 		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 
 		# bismark
-		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.bam', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.bam', sample = SAMPLES)],
 
 		# bismark deduplicate
-		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
 
 		# bismark call methylation
-		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
 
 # 1. fastqc 
 rule fast_qc:
@@ -115,10 +126,60 @@ rule fast_qc:
 		"""
 		fastqc -o {OUT_DIR}/fastQC_output {input} &> {log}
 		"""
+
+# add trimmomatic
+rule trim:
+	input:
+		r1 = lambda wildcards: FILES[wildcards.sample]['1'],
+		r2 = lambda wildcards: FILES[wildcards.sample]['2']
+	output:
+		'{OUT_DIR}/{sample}_filtered_1P.fastq.gz',
+		'{OUT_DIR}/{sample}_filtered_1U.fastq.gz',
+		'{OUT_DIR}/{sample}_filtered_2P.fastq.gz',
+		'{OUT_DIR}/{sample}_filtered_2U.fastq.gz'
+	log:
+		summary = '{OUT_DIR}/logs/{sample}_summary_trimmomatic.log',
+		detail = '{OUT_DIR}/logs/{sample}_detail_trimmomatic.log'
+	shell:
+		"""
+		java -jar {TRIM}/trimmomatic-0.36.jar PE -trimlog {log.detail} {input.r1} {input.r2} -baseout {OUT_DIR}/{wildcards.sample}_filtered.fastq.gz ILLUMINACLIP:{TRIM}/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 &> {log.summary}
+		"""
+
+# add another round of fastq for R1 and R2 post trimmomatic
+
+# run trimmed read 1's through fastQC
+rule fast_qc_2_a:
+	input:
+		expand(join(OUT_DIR, '{sample}_filtered_1P.fastq.gz'), sample= SAMPLES)
+	output:
+		'{OUT_DIR}/fastQC_output_2/{sample}_filtered_1P_fastqc.html'
+	log:
+		'{OUT_DIR}/logs/{sample}_filtered_1P_fastqc_2.log'
+	shell:
+		"""
+		fastqc -o {OUT_DIR}/fastQC_output_2 {OUT_DIR}/{wildcards.sample}_filtered_1P.fastq.gz &> {log}
+		"""
+
+# run trimmed read 2's through fastQC
+rule fast_qc_2_b:
+	input:
+		expand(join(OUT_DIR, '{sample}_filtered_2P.fastq.gz'), sample= SAMPLES)
+	output:
+		'{OUT_DIR}/fastQC_output_2/{sample}_filtered_2P_fastqc.html'
+	log:
+		'{OUT_DIR}/logs/{sample}_filtered_2P_fastqc_2.log'
+	shell:
+		"""
+		fastqc -o {OUT_DIR}/fastQC_output_2 {OUT_DIR}/{wildcards.sample}_filtered_2P.fastq.gz &> {log}
+		"""
+
+
 # 2. multiqc so all fastqc files in one place
 rule multi_qc_metrics:
     input:
         fastqc_files = expand(join(OUT_DIR, 'fastQC_output', '{sample_full}_fastqc.html'), sample_full = SAMPLES_FULL), 
+        fastqc_files_2_1P = expand(join(OUT_DIR, 'fastQC_output_2', '{sample}_filtered_1P_fastqc.html'), sample = SAMPLES),
+        fastqc_files_2_2P = expand(join(OUT_DIR, 'fastQC_output_2', '{sample}_filtered_2P_fastqc.html'), sample = SAMPLES),
     output:
         '{OUT_DIR}/quality_control_metrics/multiqc/multiqc_report.html'
     shell:
@@ -142,12 +203,14 @@ rule bismark_genome_prep:
 # 4. Bismark mapping in paired end mode; reference GRCh37; specify bam output
 rule bismark:
 	input:
-		r1 = lambda wildcards: FILES[wildcards.sample]['1'],
-		r2 = lambda wildcards: FILES[wildcards.sample]['2'],
+		#r1 = lambda wildcards: FILES[wildcards.sample]['1'],
+		#r2 = lambda wildcards: FILES[wildcards.sample]['2'],
+		r1 = expand(join(OUT_DIR, '{sample}_filtered_1P.fastq.gz'), sample= SAMPLES),
+		r2 = expand(join(OUT_DIR, '{sample}_filtered_2P.fastq.gz'), sample= SAMPLES),
 		prep1 = GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 		prep2 = GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
 	output:
-		'{OUT_DIR}/{sample}_bismark_bt2_pe.bam'
+		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.bam'
 	threads: 4
 	shell:
 		"""
@@ -157,9 +220,9 @@ rule bismark:
 # 4. deduplicate reads
 rule bismark_deduplicate:
 	input:
-		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.bam'), sample= SAMPLES)
+		expand(join(OUT_DIR, '{sample}_filtered_bismark_bt2_pe.bam'), sample= SAMPLES)
 	output:
-		'{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bam'
+		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
 		{BISMARK}/deduplicate_bismark  --bam --paired {input}
@@ -172,9 +235,9 @@ rule bismark_deduplicate:
 # cytosines (see M-bias plot), it is recommended that the first couple of bp of Read 2 are removed before starting downstream analysis.
 rule bismark_methylation_extractor:
 	input:
-		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
+		expand(join(OUT_DIR, '{sample}_filtered_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
 	output:
-		'{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz'
+		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.deduplicated.bedgraph.gz'
 	threads: 4
 	shell:
 		"""
