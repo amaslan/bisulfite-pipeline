@@ -6,3 +6,6 @@ DATA_DIR: '/global/scratch/users/amaslan/ivana'
 
 # bismark output files
 OUT_DIR: '/global/scratch/users/amaslan/ivana_bs/results'
+
+# bismark install
+BISMARK: '/global/scratch/users/amaslan/ivana_bs/Bismark-0.22.3'

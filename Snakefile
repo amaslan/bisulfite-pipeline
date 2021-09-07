@@ -3,7 +3,7 @@ Perform QC and bisulfite analysis with bismark
 
 Requirements:
 - update config.yaml
-- fastqc, bismark, bowtie
+- fastqc, bismark, bowtie2, samtools (for bam output)
 - fasta of reference genome
 
 Usage: snakemake -j
@@ -34,6 +34,7 @@ configfile: 'config.yaml'
 GENOME_DIR = config['GENOME_DIR']
 DATA_DIR = config['DATA_DIR']
 OUT_DIR = config['OUT_DIR']
+BISMARK = config['BISMARK']
 
 
 
@@ -86,10 +87,23 @@ rule all:
 	input:
 		# fastqc
 		[OUT_DIR + "/" + x for x in expand('fastQC_output/{sample_full}_fastqc.html', sample_full = SAMPLES_FULL)],
-		# multiqc
-		OUT_DIR + '/quality_control_metrics/multiqc/multiqc_report.html'
 
-# 1. fastqc & multiqc
+		# multiqc
+		OUT_DIR + '/quality_control_metrics/multiqc/multiqc_report.html',
+
+		# bismark genome prep
+		GENOME_DIR+"Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+
+		# bismark
+		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.bam', sample = SAMPLES)],
+
+		# bismark deduplicate
+		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
+
+		# bismark call methylation
+		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
+
+# 1. fastqc 
 rule fast_qc:
 	input:
 		lambda wildcards: [s for s in SAMPLES_FULL_PATH if wildcards.sample_full in s]
@@ -101,7 +115,7 @@ rule fast_qc:
 		"""
 		fastqc -o {OUT_DIR}/fastQC_output {input} &> {log}
 		"""
-
+# 2. multiqc so all fastqc files in one place
 rule multi_qc_metrics:
     input:
         fastqc_files = expand(join(OUT_DIR, 'fastQC_output', '{sample_full}_fastqc.html'), sample_full = SAMPLES_FULL), 
@@ -112,14 +126,58 @@ rule multi_qc_metrics:
 		multiqc {OUT_DIR} -o '{OUT_DIR}/quality_control_metrics/multiqc'
 		"""
 
-# 2. bismark genome preparation --> genome is bisulfite converted and indexed
-# bismark_genome_preparation --bowtie2 --verbose genome_folder 
+# 3. bismark genome preparation --> genome is bisulfite converted and indexed
+rule bismark_genome_prep:
+	input:
+		GENOME_DIR
+	output:
+		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+		GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
+	shell:
+		"""
+		{BISMARK}/bismark_genome_preparation --bowtie2 --verbose {GENOME_DIR}
+		"""
 
-# 3. Bismark mapping in paired end mode; reference GRCh37
-# tolerating n non-bisulfite matches per read
-# bismark --bowtie2 -n 1 -l read_length genome_folder -1 .fastq -2 .fastq
+
+# 4. Bismark mapping in paired end mode; reference GRCh37; specify bam output
+rule bismark:
+	input:
+		r1 = lambda wildcards: FILES[wildcards.sample]['1'],
+		r2 = lambda wildcards: FILES[wildcards.sample]['2'],
+		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+		GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
+	output:
+		{OUT_DIR}/{sample}_bismark_bt2_pe.bam
+	threads: 4
+	shell:
+		"""
+		{BISMARK}/bismark --bowtie2 --bam genome_folder -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads}
+		"""
 
 # 4. deduplicate reads
+rule bismark_deduplicate:
+	input:
+		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.bam'), sample= SAMPLES)
+	output:
+		{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bam
+	shell:
+		"""
+		{BISMARK}/deduplicate_bismark  --bam --paired {input}
+		"""
+	
 
-# 5. CpG methylation calls extracted from deduplicated mapping output using Bismark methylation extractor (v 0.14.4) in paired-end mode
-# bismark_methylation_extractor -p sample.bismark.sam
+# 5. CpG methylation calls extracted from deduplicated mapping output using Bismark methylation extractor in paired-end mode
+# Ignore the first <int> bp from the 5' end of Read 2 of paired-end sequencing results only. Since the first couple of bases in Read 2 
+# of BS-Seq experiments show a severe bias towards non-methylation as a result of end-repairing sonicated fragments with unmethylated 
+# cytosines (see M-bias plot), it is recommended that the first couple of bp of Read 2 are removed before starting downstream analysis.
+rule bismark_methylation_extractor:
+	input:
+		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
+	output:
+		OUT_DIR/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz
+	threads: 4
+	shell:
+		"""
+		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {input}
+		"""
+
