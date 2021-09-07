@@ -92,7 +92,7 @@ rule all:
 		OUT_DIR + '/quality_control_metrics/multiqc/multiqc_report.html',
 
 		# bismark genome prep
-		GENOME_DIR+"Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 
 		# bismark
 		[OUT_DIR + "/" + x for x in expand('{sample}_bismark_bt2_pe.bam', sample = SAMPLES)],
