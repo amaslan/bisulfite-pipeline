@@ -144,8 +144,8 @@ rule bismark:
 	input:
 		r1 = lambda wildcards: FILES[wildcards.sample]['1'],
 		r2 = lambda wildcards: FILES[wildcards.sample]['2'],
-		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
-		GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
+		prep1 = GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+		prep2 = GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
 	output:
 		'{OUT_DIR}/{sample}_bismark_bt2_pe.bam'
 	threads: 4
