@@ -174,7 +174,7 @@ rule bismark_methylation_extractor:
 	input:
 		expand(join(OUT_DIR, '{sample}_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
 	output:
-		'OUT_DIR/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz'
+		'{OUT_DIR}/{sample}_bismark_bt2_pe.deduplicated.bedgraph.gz'
 	threads: 4
 	shell:
 		"""
