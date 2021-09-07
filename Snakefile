@@ -214,7 +214,7 @@ rule bismark:
 	threads: 4
 	shell:
 		"""
-		{BISMARK}/bismark --bowtie2 --bam genome_folder -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads}
+		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads}
 		"""
 
 # 4. deduplicate reads
