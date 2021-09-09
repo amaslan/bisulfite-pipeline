@@ -106,13 +106,13 @@ rule all:
 		GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 
 		# bismark
-		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.bam', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.bam', sample = SAMPLES)],
 
 		# bismark deduplicate
-		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
 
 		# bismark call methylation
-		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
 
 # 1. fastqc 
 rule fast_qc:
@@ -210,19 +210,21 @@ rule bismark:
 		prep1 = GENOME_DIR+"/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
 		prep2 = GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
 	output:
-		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.bam'
+		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.bam'
 	threads: 4
+	log:
+        '{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
 	shell:
 		"""
-		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads}
+		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads} 2> {log}
 		"""
 
 # 4. deduplicate reads
 rule bismark_deduplicate:
 	input:
-		expand(join(OUT_DIR, '{sample}_filtered_bismark_bt2_pe.bam'), sample= SAMPLES)
+		expand(join(OUT_DIR, '{sample}_filtered_1P_bismark_bt2_pe.bam'), sample= SAMPLES)
 	output:
-		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.deduplicated.bam'
+		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
 		{BISMARK}/deduplicate_bismark  --bam --paired {input}
@@ -235,9 +237,9 @@ rule bismark_deduplicate:
 # cytosines (see M-bias plot), it is recommended that the first couple of bp of Read 2 are removed before starting downstream analysis.
 rule bismark_methylation_extractor:
 	input:
-		expand(join(OUT_DIR, '{sample}_filtered_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
+		expand(join(OUT_DIR, '{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
 	output:
-		'{OUT_DIR}/{sample}_filtered_bismark_bt2_pe.deduplicated.bedgraph.gz'
+		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedgraph.gz'
 	threads: 4
 	shell:
 		"""
