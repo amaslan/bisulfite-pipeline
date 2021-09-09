@@ -17,7 +17,7 @@
 # Nodes:
 #SBATCH --nodes=1
 # Specify number of tasks for use case (example):
-#SBATCH --ntasks-per-node=10
+#SBATCH --ntasks-per-node=12
 ## Command(s) to run:
 module load fastqc/0.11.9
 module load samtools/1.8
