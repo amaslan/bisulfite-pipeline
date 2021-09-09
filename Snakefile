@@ -217,7 +217,7 @@ rule bismark:
 		'{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
 	shell:
 		"""
-		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {OUT_DIR}/{wilcards.sample}_filtered_1P.fastq.gz -2 {OUT_DIR}/{wilcards.sample}_filtered_2P.fastq.gz --output_dir {OUT_DIR} --multicore {threads} 2> {log}
+		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {OUT_DIR}/{wildcards.sample}_filtered_1P.fastq.gz -2 {OUT_DIR}/{wildcards.sample}_filtered_2P.fastq.gz --output_dir {OUT_DIR} --multicore {threads} 2> {log}
 		"""
 		
 
@@ -230,7 +230,7 @@ rule bismark_deduplicate:
 		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
-		{BISMARK}/deduplicate_bismark  --bam --paired {OUT_DIR}/{wilcards.sample}_filtered_1P_bismark_bt2_pe.bam
+		{BISMARK}/deduplicate_bismark  --bam --paired {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.bam
 		"""
 	
 
