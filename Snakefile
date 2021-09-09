@@ -211,7 +211,7 @@ rule bismark:
 		prep2 = GENOME_DIR+"/Bisulfite_Genome/GA_conversion/genome_mfa.GA_conversion.fa"
 	output:
 		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.bam'
-	threads: 4
+	threads: 2
 	log:
         '{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
 	shell:
