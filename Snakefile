@@ -213,7 +213,7 @@ rule bismark:
 		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.bam'
 	threads: 2
 	log:
-        '{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
+		'{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
 	shell:
 		"""
 		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads} 2> {log}
