@@ -201,6 +201,7 @@ rule bismark_genome_prep:
 
 
 # 4. Bismark mapping in paired end mode; reference GRCh37; specify bam output
+#{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads} 2> {log}
 rule bismark:
 	input:
 		#r1 = lambda wildcards: FILES[wildcards.sample]['1'],
@@ -216,8 +217,10 @@ rule bismark:
 		'{OUT_DIR}/log/{sample}_bismark_pe_mapping.log'
 	shell:
 		"""
-		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {input.r1} -2 {input.r2} --output_dir {OUT_DIR} --multicore {threads} 2> {log}
+		{BISMARK}/bismark --bowtie2 --bam {GENOME_DIR} -1 {OUT_DIR}/{wilcards.sample}_filtered_1P.fastq.gz -2 {OUT_DIR}/{wilcards.sample}_filtered_2P.fastq.gz --output_dir {OUT_DIR} --multicore {threads} 2> {log}
 		"""
+		
+
 
 # 4. deduplicate reads
 rule bismark_deduplicate:
@@ -227,7 +230,7 @@ rule bismark_deduplicate:
 		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
-		{BISMARK}/deduplicate_bismark  --bam --paired {input}
+		{BISMARK}/deduplicate_bismark  --bam --paired {OUT_DIR}/{wilcards.sample}_filtered_1P_bismark_bt2_pe.bam
 		"""
 	
 
@@ -243,6 +246,6 @@ rule bismark_methylation_extractor:
 	threads: 4
 	shell:
 		"""
-		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {input}
+		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam
 		"""
 
