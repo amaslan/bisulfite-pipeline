@@ -230,7 +230,7 @@ rule bismark_deduplicate:
 		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'
 	shell:
 		"""
-		{BISMARK}/deduplicate_bismark  --bam --paired {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.bam
+		{BISMARK}/deduplicate_bismark  --bam --paired {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.bam --output_dir {OUT_DIR}
 		"""
 	
 
@@ -246,6 +246,6 @@ rule bismark_methylation_extractor:
 	threads: 4
 	shell:
 		"""
-		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam
+		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam --output_dir {OUT_DIR}
 		"""
 
