@@ -112,7 +112,7 @@ rule all:
 		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam', sample = SAMPLES)],
 
 		# bismark call methylation
-		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedgraph.gz', sample = SAMPLES)]
+		[OUT_DIR + "/" + x for x in expand('{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedGraph.gz', sample = SAMPLES)]
 
 # 1. fastqc 
 rule fast_qc:
@@ -242,7 +242,7 @@ rule bismark_methylation_extractor:
 	input:
 		expand(join(OUT_DIR, '{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam'), sample= SAMPLES)
 	output:
-		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedgraph.gz'
+		'{OUT_DIR}/{sample}_filtered_1P_bismark_bt2_pe.deduplicated.bedGraph.gz'
 	threads: 4
 	shell:
 		"""
