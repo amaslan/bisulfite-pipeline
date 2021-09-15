@@ -246,6 +246,6 @@ rule bismark_methylation_extractor:
 	threads: 4
 	shell:
 		"""
-		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam --output_dir {OUT_DIR}
+		{BISMARK}/bismark_methylation_extractor --gzip --paired-end --ignore_r2 2 --bedgraph --multicore {threads} {OUT_DIR}/{wildcards.sample}_filtered_1P_bismark_bt2_pe.deduplicated.bam --output {OUT_DIR}
 		"""
 
