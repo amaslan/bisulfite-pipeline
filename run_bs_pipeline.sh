@@ -12,7 +12,7 @@
 #SBATCH --qos=rosalind_savio_normal
 #
 # Wall clock limit:
-#SBATCH --time=5-00:00:00
+#SBATCH --time=2-00:00:00
 #
 # Nodes:
 #SBATCH --nodes=1
