@@ -1,4 +1,4 @@
-# bs-seq-pipeline-ivana
+# bisulfite-pipeline
 bismak bisulfite analysis
 
 ### Requirements
